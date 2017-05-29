@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+		<title>d2l-time-picker test</title>
+
+		<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+		<script src="../../web-component-tester/browser.js"></script>
+		<script src="../../web-component-tester/data/a11ySuite.js"></script>
+		<script type="text/javascript" src="https://s.brightspace.com/lib/d2l-intl/0.2.1/Intl.js"></script>
+
+		<link rel="import" href="../d2l-time-picker.html">
+	</head>
+	<body>
+		<test-fixture id="basic">
+			<template>
+				<d2l-time-picker></d2l-time-picker>
+			</template>
+		</test-fixture>
+
+		<script>
+			suite('d2l-time-picker', function() {
+				a11ySuite('basic');
+
+				setup(function() {
+					this.clock = sinon.useFakeTimers(Date.now());
+					this.element = fixture('basic');
+				});
+
+				teardown(function() {
+					this.clock.restore();
+				});
+
+				test('instantiating the element works', function() {
+					expect(this.element.is).to.equal('d2l-time-picker');
+				});
+
+				suite('gap', function() {
+					test('defaults to 30', function() {
+						expect(this.element.gap).to.equal(30);
+					});
+				});
+
+				[{
+					locale: 'en'
+				}, {
+					locale: 'fr-CA'
+				}].forEach(function(testCase) {
+					suite(testCase.locale, function() {
+						setup(function() {
+							this.element.locale = testCase.locale;
+							this.element.overrides = testCase.overrides;
+						});
+
+						suite('time property', function() {
+							test('hours defaults to Date.now()', function() {
+								var date = new Date();
+								expect(this.element.time).to.deep.equal({
+									hours: date.getHours(),
+									minutes: 0
+								});
+							});
+
+							test('updates value property when set', function() {
+								this.element.time.minutes = 1;
+
+								var date = new Date();
+								date.setMinutes(1);
+								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
+								var formattedTime = formatter.formatTime(date);
+								expect(this.element.value).to.equal(formattedTime);
+							});
+						});
+
+						suite('value property', function() {
+							test('defaults to Date.now()', function() {
+								var date = new Date();
+								date.setMinutes(0);
+								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
+								var formattedTime = formatter.formatTime(date);
+								expect(this.element.value).to.equal(formattedTime);
+							});
+
+							test('updates time property when set', function() {
+								var date = new Date(Date.now() + 60000);
+								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
+								var formattedTime = formatter.formatTime(date);
+								this.element.value = formattedTime;
+
+								expect(this.element.time).to.deep.equal({
+									hours: date.getHours(),
+									minutes: date.getMinutes()
+								});
+							});
+						});
+
+						suite('listbox items', function() {
+							test('has all times separated by gap in a 24 hour period', function() {
+								var date = new Date(0, 0, 0, 0, 0, 0, 0);
+								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
+								var expectations = new Array(48);
+								for (var i = 0; i < 48; i++) {
+									date.setHours(Math.floor(i / 2));
+									date.setMinutes((i % 2) * 30);
+									expectations[i] = formatter.formatTime(date);
+								}
+
+								var items = this.element.$$('d2l-times-listbox').items;
+								var times = items.map(function(item) {
+									return item.textContent.trim();
+								});
+								expect(times).to.deep.equal(expectations);
+							});
+
+							test('shown only when input is focused', function() {
+								var listbox = this.element.$$('d2l-times-listbox');
+								expect(listbox.hasAttribute('hidden')).to.be.true;
+								this.element.focus();
+								expect(listbox.hasAttribute('hidden')).to.be.false;
+							});
+
+							test('time closest to time property is selected', function() {
+								this.element.time.hours = 1;
+								this.element.time.minutes = 35;
+								var listbox = this.element.$$('d2l-times-listbox');
+								expect(listbox.items[3].hasAttribute('selected')).to.be.true;
+							});
+
+							test('time closest to time property is selected', function() {
+								this.element.time.hours = 1;
+								this.element.time.minutes = 25;
+								var listbox = this.element.$$('d2l-times-listbox');
+								expect(listbox.items[3].hasAttribute('selected')).to.be.true;
+							});
+						});
+					});
+				});
+			});
+		</script>
+	</body>
+</html>
