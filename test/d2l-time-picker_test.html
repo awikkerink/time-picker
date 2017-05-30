@@ -46,9 +46,9 @@
 					expect(this.element.is).to.equal('d2l-time-picker');
 				});
 
-				suite('gap', function() {
+				suite('timeInterval', function() {
 					test('defaults to 30', function() {
-						expect(this.element.gap).to.equal(30);
+						expect(this.element.timeInterval).to.equal(30);
 					});
 				});
 
@@ -63,17 +63,14 @@
 							this.element.overrides = testCase.overrides;
 						});
 
-						suite('time property', function() {
+						suite('hours/minutes properties', function() {
 							test('hours defaults to Date.now()', function() {
 								var date = new Date();
-								expect(this.element.time).to.deep.equal({
-									hours: date.getHours(),
-									minutes: 0
-								});
+								expect(this.element.hours).to.equal(date.getHours());
 							});
 
 							test('updates value property when set', function() {
-								this.element.updateValue(this.element.time.hours, 1);
+								this.element.minutes = 1;
 
 								var date = new Date();
 								date.setMinutes(1);
@@ -98,10 +95,13 @@
 								var formattedTime = formatter.formatTime(date);
 								this.element.value = formattedTime;
 
-								expect(this.element.time).to.deep.equal({
-									hours: date.getHours(),
-									minutes: date.getMinutes()
-								});
+								expect(this.element.hours).to.equal(date.getHours());
+								expect(this.element.minutes).to.equal(date.getMinutes());
+							});
+
+							test('value is maintained when value is set to invalid time', function() {
+								this.element.value = '00:0';
+								expect(this.element.value).to.equal('00:0');
 							});
 						});
 
@@ -149,54 +149,45 @@
 							});
 
 							test('time closest to time property is selected', function() {
-								this.element.time.hours = 1;
-								this.element.time.minutes = 35;
+								this.element.hours = 1;
+								this.element.minutes = 35;
 								var listbox = this.element.$$('d2l-times-listbox');
 								expect(listbox.items[3].hasAttribute('selected')).to.be.true;
 							});
 
 							test('time closest to time property is selected', function() {
-								this.element.time.hours = 1;
-								this.element.time.minutes = 25;
+								this.element.hours = 1;
+								this.element.minutes = 25;
 								var listbox = this.element.$$('d2l-times-listbox');
 								expect(listbox.items[3].hasAttribute('selected')).to.be.true;
 							});
 						});
+					});
+				});
 
-						suite('timezone attribute', function() {
-							setup(function() {
-								this.clock.restore();
-								this.clock = sinon.useFakeTimers(0);
-								this.element = fixture('basic');
-							});
+				suite('timezone attribute', function() {
+					setup(function() {
+						this.clock.restore();
+						this.clock = sinon.useFakeTimers(0);
+						this.element = fixture('basic');
+					});
 
-							test('EST', function() {
-								this.element.timezone = 'EST';
+					test('EST', function() {
+						this.element.timezone = 'EST';
 
-								expect(this.element.time).to.deep.equal({
-									hours: 19,
-									minutes: 0
-								});
-							});
+						expect(this.element.hours).to.equal(19);
+					});
 
-							test('America/Los_Angeles', function() {
-								this.element.timezone = 'America/Los_Angeles';
+					test('America/Los_Angeles', function() {
+						this.element.timezone = 'America/Los_Angeles';
 
-								expect(this.element.time).to.deep.equal({
-									hours: 16,
-									minutes: 0
-								});
-							});
+						expect(this.element.hours).to.equal(16);
+					});
 
-							test('UTC', function() {
-								this.element.timezone = 'UTC';
+					test('UTC', function() {
+						this.element.timezone = 'UTC';
 
-								expect(this.element.time).to.deep.equal({
-									hours: 0,
-									minutes: 0
-								});
-							});
-						});
+						expect(this.element.hours).to.equal(0);
 					});
 				});
 			});
