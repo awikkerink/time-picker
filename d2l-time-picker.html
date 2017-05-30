@@ -1,4 +1,8 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../d2l-forms/d2l-input-styles.html">
+<script type="text/javascript" src="https://s.brightspace.com/lib/d2l-intl/0.2.1/Intl.js"></script>
+<script type="text/javascript" src="https://s.brightspace.com/lib/moment.js/2.15.2/moment.min.js"></script>
+<script type="text/javascript" src="https://s.brightspace.com/lib/moment-timezone/0.5.10/moment-timezone-with-data.min.js"></script>
 
 <!--
 `d2l-time-picker`
@@ -8,27 +12,112 @@ Accessible, Localized Time Picker Input Element
 -->
 
 <dom-module id="d2l-time-picker">
-	<template>
-		<style>
+	<template strip-whitespace>
+		<style include="d2l-input-styles">
 			:host {
-				display: block;
+				display: inline-block;
 			}
 		</style>
-		<h2>Hello [[prop1]]!</h2>
+		<iron-input bind-value="{{value}}">
+			<input type="text" class="d2l-input" is="iron-input" value="{{value::input}}"/>
+		</iron-input>
 	</template>
 
 	<script>
-	Polymer({
+		/* global d2lIntl, moment */
+		Polymer({
 
-		is: 'd2l-time-picker',
+			is: 'd2l-time-picker',
 
-		properties: {
-			prop1: {
-				type: String,
-				value: 'd2l-time-picker'
+			properties: {
+				timeInterval: {
+					type: Number,
+					value: 30
+				},
+				hours: {
+					type: Number,
+					notify: true
+				},
+				minutes: {
+					type: Number,
+					notify: true
+				},
+				value: {
+					type: String,
+					notify: true,
+					observer: '_valueChanged'
+				},
+				locale: {
+					type: String,
+					value: ''
+				},
+				overrides: {
+					type: Object,
+					value: {}
+				},
+				timezone: {
+					type: String,
+					observer: '_timezoneChanged',
+					value: moment.tz.guess()
+				},
+				formatter: {
+					type: Object,
+					readOnly: true,
+					value: new d2lIntl.DateTimeFormat()
+				},
+				parser: {
+					type: Object,
+					readOnly: true,
+					value: new d2lIntl.DateTimeParse()
+				}
+			},
+
+			observers: [
+				'_updateFormater(locale, overrides)',
+				'updateValue(hours, minutes)'
+			],
+
+			_updateFormater: function(locale, overrides) {
+				this._setFormatter(new d2lIntl.DateTimeFormat(locale, overrides));
+				this._setParser(new d2lIntl.DateTimeParse(locale, overrides));
+				this.updateValue(this.hours, this.minutes);
+			},
+
+			_valueChanged: function(value) {
+				var date = this.parser.parseTime(value);
+				if (date) {
+					this._dontUpdateValue = true;
+					this.hours = date.getHours();
+					this.minutes = date.getMinutes();
+					this._dontUpdateValue = false;
+				}
+			},
+
+			_timezoneChanged: function() {
+				this.isAttached && this.calculateTime();
+			},
+
+			updateValue: function(hours, minutes) {
+				if (!this.formatter || this._dontUpdateValue) {
+					return;
+				}
+				if (typeof hours !== 'number' && typeof minutes !== 'number') {
+					return;
+				}
+				var dateDisplay = new Date(0, 0, 0, hours || 0, minutes || 0, 0, 0);
+				this.value = this.formatter.formatTime(dateDisplay);
+			},
+
+			calculateTime: function() {
+				var date = new Date();
+				var localeDate = moment.tz(date, this.timezone);
+				this.updateValue(localeDate.hour(), 0);
+			},
+
+			attached: function() {
+				this.calculateTime();
 			}
-		}
 
-	});
+		});
 	</script>
 </dom-module>
