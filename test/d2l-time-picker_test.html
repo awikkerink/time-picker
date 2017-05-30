@@ -14,6 +14,12 @@
 		<link rel="import" href="../d2l-time-picker.html">
 	</head>
 	<body>
+		<test-fixture id="a11y">
+			<template>
+				<label>Test<d2l-time-picker></d2l-time-picker></label>
+			</template>
+		</test-fixture>
+
 		<test-fixture id="basic">
 			<template>
 				<d2l-time-picker></d2l-time-picker>
@@ -21,9 +27,12 @@
 		</test-fixture>
 
 		<script>
-			suite('d2l-time-picker', function() {
-				a11ySuite('basic');
+			/* global d2lIntl */
+			suite('a11y', function() {
+				a11ySuite('a11y');
+			});
 
+			suite('d2l-time-picker', function() {
 				setup(function() {
 					this.clock = sinon.useFakeTimers(Date.now());
 					this.element = fixture('basic');
@@ -64,7 +73,7 @@
 							});
 
 							test('updates value property when set', function() {
-								this.element.time.minutes = 1;
+								this.element.updateValue(this.element.time.hours, 1);
 
 								var date = new Date();
 								date.setMinutes(1);
@@ -97,13 +106,31 @@
 						});
 
 						suite('listbox items', function() {
-							test('has all times separated by gap in a 24 hour period', function() {
+							test('has all times separated by gap (30) in a 24 hour period', function() {
 								var date = new Date(0, 0, 0, 0, 0, 0, 0);
 								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
 								var expectations = new Array(48);
 								for (var i = 0; i < 48; i++) {
 									date.setHours(Math.floor(i / 2));
 									date.setMinutes((i % 2) * 30);
+									expectations[i] = formatter.formatTime(date);
+								}
+
+								var items = this.element.$$('d2l-times-listbox').items;
+								var times = items.map(function(item) {
+									return item.textContent.trim();
+								});
+								expect(times).to.deep.equal(expectations);
+							});
+
+							test('has all times separated by gap (20) in a 24 hour period', function() {
+								this.element.gap = 20;
+								var date = new Date(0, 0, 0, 0, 0, 0, 0);
+								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
+								var expectations = new Array(72);
+								for (var i = 0; i < 72; i++) {
+									date.setHours(Math.floor(i / 3));
+									date.setMinutes((i % 3) * 30);
 									expectations[i] = formatter.formatTime(date);
 								}
 
@@ -133,6 +160,41 @@
 								this.element.time.minutes = 25;
 								var listbox = this.element.$$('d2l-times-listbox');
 								expect(listbox.items[3].hasAttribute('selected')).to.be.true;
+							});
+						});
+
+						suite('timezone attribute', function() {
+							setup(function() {
+								this.clock.restore();
+								this.clock = sinon.useFakeTimers(0);
+								this.element = fixture('basic');
+							});
+
+							test('EST', function() {
+								this.element.timezone = 'EST';
+
+								expect(this.element.time).to.deep.equal({
+									hours: 19,
+									minutes: 0
+								});
+							});
+
+							test('America/Los_Angeles', function() {
+								this.element.timezone = 'America/Los_Angeles';
+
+								expect(this.element.time).to.deep.equal({
+									hours: 16,
+									minutes: 0
+								});
+							});
+
+							test('UTC', function() {
+								this.element.timezone = 'UTC';
+
+								expect(this.element.time).to.deep.equal({
+									hours: 0,
+									minutes: 0
+								});
 							});
 						});
 					});

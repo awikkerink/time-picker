@@ -7,7 +7,6 @@
     "fixture": false,
     "a11ySuite": false,
     "expect": false,
-    "sinon": false,
-    "d2lIntl": false
+    "sinon": false
   }
 }

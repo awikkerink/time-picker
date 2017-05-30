@@ -14,8 +14,14 @@
 	<body unresolved>
 		<d2l-demo-template title="d2l-time-picker">
 			<div class="d2l-demo-fixture">
-				<d2l-time-picker locale="en"></d2l-time-picker>
-				<d2l-time-picker locale="fr-CA"></d2l-time-picker>
+				<dom-bind>
+					<template is="dom-bind">
+						<label>Locale: <input value="{{locale::input}}"/></label>
+						<label>Timezone: <input value="{{timezone::input}}"/></label>
+						<br/>
+						<label>Time picker: <d2l-time-picker locale="{{locale}}" timezone="{{timezone}}"></d2l-time-picker></label>
+					</template>
+				</dom-bind>
 			</div>
 		</d2l-demo-template>
 	</body>
