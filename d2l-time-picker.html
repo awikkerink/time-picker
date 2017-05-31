@@ -251,6 +251,8 @@ Accessible, Localized Time Picker Input Element
 					return false;
 				}
 				this.$.dropdown.open();
+				// listboxId is not set until the dropdown is open because the listbox
+				// isn't actually added to the DOM until dropdown is opened for the first time
 				this.listboxId = this.instanceId + '-listbox';
 				this.updateSelection(this.hours, this.minutes);
 				this._scrollSelectedItemIntoView();
@@ -260,19 +262,6 @@ Accessible, Localized Time Picker Input Element
 			_closeTimesList: function(updateValue) {
 				this._dontUpdateValueOnClose = !updateValue;
 				this.$.dropdown.close();
-			},
-
-			_onTimeInputFocused: function() {
-				if (this.$.dropdown.opened) {
-					return;
-				}
-				this.set('_dropdownWidth', this.$$('input').offsetWidth);
-				this._openTimesList();
-			},
-
-			_handleTimesListClick: function() {
-				this.$$('input').focus();
-				this._closeTimesList(true);
 			},
 
 			_handleDropdownClose: function() {
@@ -293,6 +282,19 @@ Accessible, Localized Time Picker Input Element
 						listBox.selectedItem.scrollIntoView();
 					}
 				});
+			},
+
+			_onTimeInputFocused: function() {
+				if (this.$.dropdown.opened) {
+					return;
+				}
+				this.set('_dropdownWidth', this.$$('input').offsetWidth);
+				this._openTimesList();
+			},
+
+			_handleTimesListClick: function() {
+				this.$$('input').focus();
+				this._closeTimesList(true);
 			},
 
 			_onTimeInputKeyPressed: function(e) {
