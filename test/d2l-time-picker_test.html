@@ -11,6 +11,7 @@
 		<script src="../../web-component-tester/data/a11ySuite.js"></script>
 		<script type="text/javascript" src="https://s.brightspace.com/lib/d2l-intl/0.2.1/Intl.js"></script>
 
+		<link rel="import" href="../../iron-test-helpers/mock-interactions.html">
 		<link rel="import" href="../d2l-time-picker.html">
 	</head>
 	<body>
@@ -22,24 +23,36 @@
 
 		<test-fixture id="basic">
 			<template>
-				<d2l-time-picker></d2l-time-picker>
+				<div>
+					<button id="focusable">Focusable</button>
+					<d2l-time-picker></d2l-time-picker>
+				</div>
 			</template>
 		</test-fixture>
 
 		<script>
-			/* global d2lIntl */
+			/* global d2lIntl, MockInteractions */
 			suite('a11y', function() {
 				a11ySuite('a11y');
+				a11ySuite('a11y', [], function() {
+					var a11y = fixture('a11y');
+					var picker = a11y.querySelector('d2l-time-picker');
+					picker.focus();
+				});
+				a11ySuite('a11y', [], function() {
+					var a11y = fixture('a11y');
+					var picker = a11y.querySelector('d2l-time-picker');
+					picker.focus();
+					Polymer.dom.flush();
+					MockInteractions.pressAndReleaseKeyOn(document.activeElement, 27);
+				});
 			});
 
 			suite('d2l-time-picker', function() {
 				setup(function() {
-					this.clock = sinon.useFakeTimers(Date.now());
-					this.element = fixture('basic');
-				});
-
-				teardown(function() {
-					this.clock.restore();
+					this.fixture = fixture('basic');
+					this.element = this.fixture.querySelector('d2l-time-picker');
+					this.focusable = this.fixture.querySelector('#focusable');
 				});
 
 				test('instantiating the element works', function() {
@@ -107,6 +120,9 @@
 
 						suite('listbox items', function() {
 							test('has all times separated by gap (30) in a 24 hour period', function() {
+								this.element.focus();
+								Polymer.dom.flush();
+
 								var date = new Date(0, 0, 0, 0, 0, 0, 0);
 								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
 								var expectations = new Array(48);
@@ -116,50 +132,160 @@
 									expectations[i] = formatter.formatTime(date);
 								}
 
-								var items = this.element.$$('d2l-times-listbox').items;
+								var items = this.element.$$('iron-selector').items;
 								var times = items.map(function(item) {
 									return item.textContent.trim();
 								});
 								expect(times).to.deep.equal(expectations);
 							});
 
-							test('has all times separated by gap (20) in a 24 hour period', function() {
-								this.element.gap = 20;
+							test('has all times separated by timeInterval (20) in a 24 hour period', function() {
+								this.element.timeInterval = 20;
+								this.element.focus();
+								Polymer.dom.flush();
+
 								var date = new Date(0, 0, 0, 0, 0, 0, 0);
 								var formatter = new d2lIntl.DateTimeFormat(testCase.locale, testCase.overrides);
 								var expectations = new Array(72);
 								for (var i = 0; i < 72; i++) {
 									date.setHours(Math.floor(i / 3));
-									date.setMinutes((i % 3) * 30);
+									date.setMinutes((i % 3) * 20);
 									expectations[i] = formatter.formatTime(date);
 								}
 
-								var items = this.element.$$('d2l-times-listbox').items;
+								var items = this.element.$$('iron-selector').items;
 								var times = items.map(function(item) {
 									return item.textContent.trim();
 								});
 								expect(times).to.deep.equal(expectations);
 							});
 
-							test('shown only when input is focused', function() {
-								var listbox = this.element.$$('d2l-times-listbox');
-								expect(listbox.hasAttribute('hidden')).to.be.true;
+							test('shown when input is focused', function() {
+								expect(!!this.element.$.dropdown.opened).to.be.false;
 								this.element.focus();
-								expect(listbox.hasAttribute('hidden')).to.be.false;
+								expect(!!this.element.$.dropdown.opened).to.be.true;
+							});
+
+							test('hidden when escape is pressed', function() {
+								this.element.focus();
+								expect(!!this.element.$.dropdown.opened).to.be.true;
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 27);
+								expect(!!this.element.$.dropdown.opened).to.be.false;
+							});
+
+							test('opens when down is pressed', function() {
+								this.element.focus();
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 27);
+								expect(!!this.element.$.dropdown.opened).to.be.false;
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 40);
+								expect(!!this.element.$.dropdown.opened).to.be.true;
+							});
+
+							test('opens when up is pressed', function() {
+								this.element.focus();
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 27);
+								expect(!!this.element.$.dropdown.opened).to.be.false;
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 38);
+								expect(!!this.element.$.dropdown.opened).to.be.true;
+							});
+
+							test('opens when enter is pressed', function() {
+								this.element.focus();
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 27);
+								expect(!!this.element.$.dropdown.opened).to.be.false;
+								MockInteractions.pressEnter(document.activeElement);
+								expect(!!this.element.$.dropdown.opened).to.be.true;
+							});
+
+							test('selects when item is tapped', function() {
+								var listbox = this.element.$$('iron-selector');
+								this.element.focus();
+								listbox.selectIndex(5);
+								MockInteractions.tap(listbox.items[0]);
+								expect(listbox.selected).to.equal(0);
+							});
+
+							test('selects next when down is pressed', function() {
+								this.element.focus();
+								this.element.hours = 0;
+								this.element.minutes = 0;
+								var listbox = this.element.$$('iron-selector');
+								expect(listbox.selected).to.equal(0);
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 40);
+								expect(listbox.selected).to.equal(1);
+							});
+
+							test('selects previous when down is pressed', function() {
+								this.element.focus();
+								this.element.hours = 1;
+								this.element.minutes = 0;
+								var listbox = this.element.$$('iron-selector');
+								expect(listbox.selected).to.equal(2);
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 38);
+								expect(listbox.selected).to.equal(1);
+							});
+
+							test('selects first item when home is pressed', function() {
+								var listbox = this.element.$$('iron-selector');
+								this.element.focus();
+								listbox.selectIndex(5);
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 36);
+								expect(listbox.selected).to.equal(0);
+							});
+
+							test('selects first item when home is pressed', function() {
+								var listbox = this.element.$$('iron-selector');
+								this.element.focus();
+								listbox.selectIndex(5);
+								MockInteractions.pressAndReleaseKeyOn(document.activeElement, 35);
+								expect(listbox.selected).to.equal(47);
+							});
+
+							test('updates time when enter is pressed', function() {
+								var listbox = this.element.$$('iron-selector');
+								this.element.focus();
+								this.element.value = '';
+								expect(this.element.value).to.not.equal(listbox.items[5].textContent.trim());
+								listbox.selectIndex(5);
+								MockInteractions.pressEnter(document.activeElement);
+								expect(!!this.element.$.dropdown.opened).to.be.false;
+								expect(this.element.value).to.equal(listbox.items[5].textContent.trim());
+							});
+
+							test('updates time when blured', function(done) {
+								var self = this;
+								// Wait for dropdown to register listeners
+								Polymer.RenderStatus.afterNextRender(self.element.$.dropdown, function() {
+									var listbox = self.element.$$('iron-selector');
+									self.element.$.dropdown.addEventListener('d2l-dropdown-open', function() {
+										self.focusable.focus();
+									});
+									self.element.$.dropdown.addEventListener('d2l-dropdown-close', function() {
+										setTimeout(function() {
+											expect(!!self.element.$.dropdown.opened).to.be.false;
+											expect(self.element.value).to.equal(listbox.items[5].textContent.trim());
+											done();
+										});
+									});
+
+									self.element.focus();
+									self.element.value = '';
+									listbox.selectIndex(5);
+								});
 							});
 
 							test('time closest to time property is selected', function() {
 								this.element.hours = 1;
 								this.element.minutes = 35;
-								var listbox = this.element.$$('d2l-times-listbox');
-								expect(listbox.items[3].hasAttribute('selected')).to.be.true;
+								var listbox = this.element.$$('iron-selector');
+								expect(listbox.selected).to.equal(3);
 							});
 
 							test('time closest to time property is selected', function() {
 								this.element.hours = 1;
 								this.element.minutes = 25;
-								var listbox = this.element.$$('d2l-times-listbox');
-								expect(listbox.items[3].hasAttribute('selected')).to.be.true;
+								var listbox = this.element.$$('iron-selector');
+								expect(listbox.selected).to.equal(3);
 							});
 						});
 					});
@@ -167,9 +293,11 @@
 
 				suite('timezone attribute', function() {
 					setup(function() {
-						this.clock.restore();
 						this.clock = sinon.useFakeTimers(0);
-						this.element = fixture('basic');
+					});
+
+					teardown(function() {
+						this.clock.restore();
 					});
 
 					test('EST', function() {

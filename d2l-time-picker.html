@@ -1,5 +1,9 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../d2l-forms/d2l-input-styles.html">
+<link rel="import" href="../d2l-dropdown/d2l-dropdown.html">
+<link rel="import" href="../d2l-dropdown/d2l-dropdown-content.html">
+<link rel="import" href="../iron-a11y-keys-behavior/iron-a11y-keys-behavior.html">
+<link rel="import" href="../iron-selector/iron-selector.html">
 <script type="text/javascript" src="https://s.brightspace.com/lib/d2l-intl/0.2.1/Intl.js"></script>
 <script type="text/javascript" src="https://s.brightspace.com/lib/moment.js/2.15.2/moment.min.js"></script>
 <script type="text/javascript" src="https://s.brightspace.com/lib/moment-timezone/0.5.10/moment-timezone-with-data.min.js"></script>
@@ -17,17 +21,81 @@ Accessible, Localized Time Picker Input Element
 			:host {
 				display: inline-block;
 			}
+
+			iron-selector {
+				box-sizing: border-box;
+				display: block;
+				width: 100%;
+			}
+			.d2l-times-item {
+				box-sizing: border-box;
+				border-top: 1px solid transparent;
+				border-bottom: 1px solid var(--d2l-color-gypsum);
+				list-style-type: none;
+				width: calc(100% - 2px);
+				padding: 0.75rem 1.5rem;
+				cursor: pointer;
+			}
+			.d2l-times-item:last-of-type {
+				border-bottom-color: transparent;
+			}
+			.d2l-times-item:not([disabled]):focus,
+			.d2l-times-item:not([disabled]):hover,
+			.d2l-times-item:not([disabled])[selected] {
+				background-color: var(--d2l-color-celestine-light-1);
+				border-top-color: var(--d2l-color-celestine-light-2);
+				border-bottom-color: var(--d2l-color-celestine-light-2);
+				color: var(--d2l-color-celestine);
+			}
 		</style>
-		<iron-input bind-value="{{value}}">
-			<input type="text" class="d2l-input" is="iron-input" value="{{value::input}}"/>
-		</iron-input>
+
+		<d2l-dropdown no-auto-open>
+			<div class="search-bar d2l-dropdown-opener" id="opener">
+				<iron-input bind-value="{{value}}">
+					<input
+						id="combobox"
+						is="iron-input"
+						type="text"
+						class="d2l-input"
+						role="combobox"
+						aria-autocomplete="list"
+						aria-owns$="{{listboxId}}"
+						aria-activedescendant$={{selectedListboxId}}
+						on-focus="_onTimeInputFocused"
+						value="{{value::input}}">
+				</iron-input>
+			</div>
+
+			<d2l-dropdown-content
+					id="dropdown"
+					min-width="[[_dropdownWidth]]"
+					max-width="[[_dropdownWidth]]"
+					no-pointer
+					no-auto-focus
+					no-padding>
+
+					<div class="dropdown-content">
+						<iron-selector id="{{listboxId}}" role="listbox" selected-attribute="selected">
+							<template is="dom-repeat" items="{{times}}">
+								<div id="{{listboxId}}-{{index}}" class="d2l-times-item" role="option">{{item}}</div>
+							</template>
+						</iron-selector>
+					</div>
+				</d2l-dropdown-content>
+		</d2l-dropdown>
 	</template>
 
 	<script>
+	(function() {
+		var instances = 0;
 		/* global d2lIntl, moment */
 		Polymer({
 
 			is: 'd2l-time-picker',
+
+			behaviors: [
+				Polymer.IronA11yKeysBehavior
+			],
 
 			properties: {
 				timeInterval: {
@@ -69,13 +137,37 @@ Accessible, Localized Time Picker Input Element
 					type: Object,
 					readOnly: true,
 					value: new d2lIntl.DateTimeParse()
-				}
+				},
+				times: {
+					type: Object,
+					readOnly: true,
+					value: []
+				},
+				listboxId: String,
+				selectedListboxId: String
 			},
 
 			observers: [
 				'_updateFormater(locale, overrides)',
-				'updateValue(hours, minutes)'
+				'updateValue(hours, minutes)',
+				'updateSelection(hours, minutes)',
+				'_updateTimes(timeInterval, formatter)'
 			],
+
+			listeners: {
+				'iron-select': '_scrollSelectedItemIntoView',
+				'dropdown.click': '_handleTimesListClick',
+				'd2l-dropdown-close': '_handleDropdownClose'
+			},
+
+			keyBindings: {
+				'esc': '_onTimeInputKeyPressed',
+				'enter': '_onTimeInputKeyPressed',
+				'up': '_onTimeInputKeyPressed',
+				'down': '_onTimeInputKeyPressed',
+				'home': '_onTimeInputKeyPressed',
+				'end': '_onTimeInputKeyPressed'
+			},
 
 			_updateFormater: function(locale, overrides) {
 				this._setFormatter(new d2lIntl.DateTimeFormat(locale, overrides));
@@ -97,6 +189,23 @@ Accessible, Localized Time Picker Input Element
 				this.isAttached && this.calculateTime();
 			},
 
+			_updateTimes: function(timeInterval, formatter) {
+				var date = new Date(0, 0, 0, 0, 0, 0, 0);
+				var length = 24 * 60 / timeInterval;
+				var times = new Array(length);
+				for (var i = 0; i < length; i++) {
+					date.setHours(Math.floor(i / (60 / timeInterval)));
+					date.setMinutes((i % (60 / timeInterval)) * timeInterval);
+					times[i] = formatter.formatTime(date);
+				}
+				this._setTimes(times);
+			},
+
+			updateSelection: function(hours, minutes) {
+				var index = Math.round((hours * 60 + minutes) / this.timeInterval);
+				this.$$('iron-selector').selectIndex(index);
+			},
+
 			updateValue: function(hours, minutes) {
 				if (!this.formatter || this._dontUpdateValue) {
 					return;
@@ -114,10 +223,104 @@ Accessible, Localized Time Picker Input Element
 				this.updateValue(localeDate.hour(), 0);
 			},
 
+			ready: function() {
+				this.instanceId = 'd2l-time-picker-' + instances++;
+				this.keyEventTarget = this.$$('input');
+			},
+
 			attached: function() {
 				this.calculateTime();
-			}
+			},
 
+			focus: function() {
+				this.$$('input').focus();
+			},
+
+			_onTimeInputKeyPressed: function(e) {
+				var listBox = this.$$('iron-selector');
+				switch (e.detail.key) {
+					case 'esc':
+						this._dontUpdateValueOnClose = true;
+						this.$.dropdown.close();
+						break;
+					case 'enter':
+						if (!this.$.dropdown.opened) {
+							this._openTimesList();
+							break;
+						}
+						this.$.dropdown.close();
+						break;
+					case 'down':
+						if (!this.$.dropdown.opened) {
+							this._openTimesList();
+							break;
+						}
+						listBox.selectNext();
+						break;
+					case 'up':
+						if (!this.$.dropdown.opened) {
+							this._openTimesList();
+							break;
+						}
+						listBox.selectPrevious();
+						break;
+					case 'home':
+						if (!this.$.dropdown.opened) {
+							break;
+						}
+						listBox.selectIndex(0);
+						break;
+					case 'end':
+						if (!this.$.dropdown.opened) {
+							break;
+						}
+						listBox.selectIndex(listBox.items.length - 1);
+						break;
+					default:
+						return;
+				}
+				e.preventDefault();
+			},
+
+			_openTimesList: function() {
+				this.$.dropdown.open();
+				this.listboxId = this.instanceId + '-listbox';
+				this.updateSelection(this.hours, this.minutes);
+				this._scrollSelectedItemIntoView();
+			},
+
+			_handleTimesListClick: function() {
+				this.$$('input').focus();
+				this.$.dropdown.close();
+			},
+
+			_handleDropdownClose: function() {
+				if (this._dontUpdateValueOnClose) {
+					this._dontUpdateValueOnClose = false;
+					return;
+				}
+				var listBox = this.$$('iron-selector');
+				this.value = listBox.selectedItem.textContent.trim();
+			},
+
+			_scrollSelectedItemIntoView: function() {
+				this.async(function() {
+					var listBox = this.$$('iron-selector');
+					if (listBox.selectedItem) {
+						this.selectedListboxId = this.listboxId + '-' + listBox.selected;
+						listBox.selectedItem.scrollIntoView();
+					}
+				});
+			},
+
+			_onTimeInputFocused: function() {
+				if (this.$.dropdown.opened) {
+					return;
+				}
+				this.set('_dropdownWidth', this.$$('input').offsetWidth);
+				this._openTimesList();
+			}
 		});
+	})();
 	</script>
 </dom-module>
