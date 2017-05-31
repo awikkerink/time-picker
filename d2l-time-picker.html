@@ -169,6 +169,8 @@ Accessible, Localized Time Picker Input Element
 				'end': '_onTimeInputKeyPressed'
 			},
 
+			// time display logic start
+
 			_updateFormater: function(locale, overrides) {
 				this._setFormatter(new d2lIntl.DateTimeFormat(locale, overrides));
 				this._setParser(new d2lIntl.DateTimeParse(locale, overrides));
@@ -201,11 +203,7 @@ Accessible, Localized Time Picker Input Element
 				this._setTimes(times);
 			},
 
-			updateSelection: function(hours, minutes) {
-				var index = Math.round((hours * 60 + minutes) / this.timeInterval);
-				this.$$('iron-selector').selectIndex(index);
-			},
-
+			// Update the value given the specified hours and minutes
 			updateValue: function(hours, minutes) {
 				if (!this.formatter || this._dontUpdateValue) {
 					return;
@@ -217,81 +215,61 @@ Accessible, Localized Time Picker Input Element
 				this.value = this.formatter.formatTime(dateDisplay);
 			},
 
+			// Set the value to the current hour in the given timezone
 			calculateTime: function() {
 				var date = new Date();
 				var localeDate = moment.tz(date, this.timezone);
 				this.updateValue(localeDate.hour(), 0);
 			},
 
+			attached: function() {
+				this.calculateTime();
+			},
+
+			// selection logic start
+
 			ready: function() {
 				this.instanceId = 'd2l-time-picker-' + instances++;
 				this.keyEventTarget = this.$$('input');
-			},
-
-			attached: function() {
-				this.calculateTime();
 			},
 
 			focus: function() {
 				this.$$('input').focus();
 			},
 
-			_onTimeInputKeyPressed: function(e) {
-				var listBox = this.$$('iron-selector');
-				switch (e.detail.key) {
-					case 'esc':
-						this._dontUpdateValueOnClose = true;
-						this.$.dropdown.close();
-						break;
-					case 'enter':
-						if (!this.$.dropdown.opened) {
-							this._openTimesList();
-							break;
-						}
-						this.$.dropdown.close();
-						break;
-					case 'down':
-						if (!this.$.dropdown.opened) {
-							this._openTimesList();
-							break;
-						}
-						listBox.selectNext();
-						break;
-					case 'up':
-						if (!this.$.dropdown.opened) {
-							this._openTimesList();
-							break;
-						}
-						listBox.selectPrevious();
-						break;
-					case 'home':
-						if (!this.$.dropdown.opened) {
-							break;
-						}
-						listBox.selectIndex(0);
-						break;
-					case 'end':
-						if (!this.$.dropdown.opened) {
-							break;
-						}
-						listBox.selectIndex(listBox.items.length - 1);
-						break;
-					default:
-						return;
-				}
-				e.preventDefault();
+			// Select the item closest the the hours and minutes given
+			updateSelection: function(hours, minutes) {
+				var index = Math.round((hours * 60 + minutes) / this.timeInterval);
+				this.$$('iron-selector').selectIndex(index);
 			},
 
 			_openTimesList: function() {
+				if (this.$.dropdown.opened) {
+					return false;
+				}
 				this.$.dropdown.open();
 				this.listboxId = this.instanceId + '-listbox';
 				this.updateSelection(this.hours, this.minutes);
 				this._scrollSelectedItemIntoView();
+				return true;
+			},
+
+			_closeTimesList: function(updateValue) {
+				this._dontUpdateValueOnClose = !updateValue;
+				this.$.dropdown.close();
+			},
+
+			_onTimeInputFocused: function() {
+				if (this.$.dropdown.opened) {
+					return;
+				}
+				this.set('_dropdownWidth', this.$$('input').offsetWidth);
+				this._openTimesList();
 			},
 
 			_handleTimesListClick: function() {
 				this.$$('input').focus();
-				this.$.dropdown.close();
+				this._closeTimesList(true);
 			},
 
 			_handleDropdownClose: function() {
@@ -304,6 +282,7 @@ Accessible, Localized Time Picker Input Element
 			},
 
 			_scrollSelectedItemIntoView: function() {
+				// Wait for dropdown menu height to be calculated
 				this.async(function() {
 					var listBox = this.$$('iron-selector');
 					if (listBox.selectedItem) {
@@ -313,12 +292,41 @@ Accessible, Localized Time Picker Input Element
 				});
 			},
 
-			_onTimeInputFocused: function() {
-				if (this.$.dropdown.opened) {
-					return;
+			_onTimeInputKeyPressed: function(e) {
+				var listBox = this.$$('iron-selector');
+				switch (e.detail.key) {
+					case 'esc':
+						this._closeTimesList(false);
+						break;
+					case 'enter':
+						if (!this._openTimesList()) {
+							this._closeTimesList(true);
+						}
+						break;
+					case 'down':
+						if (!this._openTimesList()) {
+							listBox.selectNext();
+						}
+						break;
+					case 'up':
+						if (!this._openTimesList()) {
+							listBox.selectPrevious();
+						}
+						break;
+					case 'home':
+						if (this.$.dropdown.opened) {
+							listBox.selectIndex(0);
+						}
+						break;
+					case 'end':
+						if (this.$.dropdown.opened) {
+							listBox.selectIndex(listBox.items.length - 1);
+						}
+						break;
+					default:
+						return;
 				}
-				this.set('_dropdownWidth', this.$$('input').offsetWidth);
-				this._openTimesList();
+				e.preventDefault();
 			}
 		});
 	})();
