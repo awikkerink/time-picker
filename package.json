@@ -3,6 +3,7 @@
   "name": "d2l-time-picker",
   "description": "Accessible, Localized Time Picker Input Element",
   "scripts": {
+    "postinstall": "polymer install",
     "test": "npm run test:lint && polymer test --skip-plugin sauce",
     "test:lint": "npm run test:lint:wc && npm run test:lint:html",
     "test:lint:html": "eslint *.html",
@@ -13,5 +14,11 @@
     "url": "https://github.com/BrightspaceUI/time-picker.git"
   },
   "author": "D2L Corporation",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "eslint": "^3.19.0",
+    "eslint-config-brightspace": "^0.2.4",
+    "eslint-plugin-html": "^2.0.3",
+    "polymer-cli": "^1.1.0"
+  }
 }

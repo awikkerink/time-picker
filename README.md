@@ -1,5 +1,7 @@
 # \<d2l-time-picker\>
 
+[![Build Status](https://travis-ci.org/BrightspaceUI/time-picker.svg?branch=master)](https://travis-ci.org/BrightspaceUI/time-picker)
+
 Accessible, Localized Time Picker Input Element
 
 ## Install the Polymer-CLI
