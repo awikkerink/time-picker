@@ -191,18 +191,6 @@ Accessible, Localized Time Picker Input Element
 				this.isAttached && this.calculateTime();
 			},
 
-			_updateTimes: function(timeInterval, formatter) {
-				var date = new Date(0, 0, 0, 0, 0, 0, 0);
-				var length = 24 * 60 / timeInterval;
-				var times = new Array(length);
-				for (var i = 0; i < length; i++) {
-					date.setHours(Math.floor(i / (60 / timeInterval)));
-					date.setMinutes((i % (60 / timeInterval)) * timeInterval);
-					times[i] = formatter.formatTime(date);
-				}
-				this._setTimes(times);
-			},
-
 			// Update the value given the specified hours and minutes
 			updateValue: function(hours, minutes) {
 				if (!this.formatter || this._dontUpdateValue) {
@@ -240,7 +228,22 @@ Accessible, Localized Time Picker Input Element
 			// Select the item closest the the hours and minutes given
 			updateSelection: function(hours, minutes) {
 				var index = Math.round((hours * 60 + minutes) / this.timeInterval);
+				if (index >= this.times.length) {
+					index = 0;
+				}
 				this.$$('iron-selector').selectIndex(index);
+			},
+
+			_updateTimes: function(timeInterval, formatter) {
+				var date = new Date(0, 0, 0, 0, 0, 0, 0);
+				var length = 24 * 60 / timeInterval;
+				var times = new Array(length);
+				for (var i = 0; i < length; i++) {
+					date.setHours(Math.floor(i / (60 / timeInterval)));
+					date.setMinutes((i % (60 / timeInterval)) * timeInterval);
+					times[i] = formatter.formatTime(date);
+				}
+				this._setTimes(times);
 			},
 
 			_openTimesList: function() {

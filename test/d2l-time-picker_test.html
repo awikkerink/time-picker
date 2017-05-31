@@ -287,6 +287,13 @@
 								var listbox = this.element.$$('iron-selector');
 								expect(listbox.selected).to.equal(3);
 							});
+
+							test('time closest to time property is selected', function() {
+								this.element.hours = 23;
+								this.element.minutes = 45;
+								var listbox = this.element.$$('iron-selector');
+								expect(listbox.selected).to.equal(0);
+							});
 						});
 					});
 				});
