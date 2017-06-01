@@ -270,7 +270,9 @@ Accessible, Localized Time Picker Input Element
 					return;
 				}
 				var listBox = this.$$('iron-selector');
-				this.value = listBox.selectedItem.textContent.trim();
+				if (listBox.selectedItem) {
+					this.value = listBox.selectedItem.textContent.trim();
+				}
 			},
 
 			_scrollSelectedItemIntoView: function() {
