@@ -26,6 +26,7 @@
 		<script>
 			/* global d2lIntl, MockInteractions */
 			suite('d2l-time-picker', function() {
+				this.timeout(1000);
 				setup(function() {
 					this.fixture = fixture('basic');
 					this.element = this.fixture.querySelector('d2l-time-picker');
