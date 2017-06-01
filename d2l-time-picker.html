@@ -67,6 +67,7 @@ Accessible, Localized Time Picker Input Element
 					id="dropdown"
 					min-width="[[_dropdownWidth]]"
 					max-width="[[_dropdownWidth]]"
+					no-auto-close
 					no-pointer
 					no-auto-focus
 					no-padding>
@@ -210,13 +211,21 @@ Accessible, Localized Time Picker Input Element
 
 			attached: function() {
 				this.calculateTime();
+				document.body.addEventListener('focus', this.__onAutoCloseFocus, true);
+				document.body.addEventListener('click', this.__onAutoCloseClick, true);
+			},
+
+			detached: function() {
+				document.body.removeEventListener('focus', this.__onAutoCloseFocus, true);
+				document.body.removeEventListener('click', this.__onAutoCloseClick, true);
 			},
 
 			// selection logic start
 
 			ready: function() {
+				this.__onAutoCloseFocus = this.__onAutoCloseFocus.bind(this);
+				this.__onAutoCloseClick = this.__onAutoCloseClick.bind(this);
 				this.instanceId = 'd2l-time-picker-' + instances++;
-				this.keyEventTarget = this.$$('input');
 			},
 
 			focus: function() {
@@ -282,6 +291,16 @@ Accessible, Localized Time Picker Input Element
 						listBox.selectedItem.scrollIntoView();
 					}
 				});
+			},
+
+			__onAutoCloseFocus: function() {
+				if (Polymer.dom(document).activeElement !== this) {
+					return this._closeTimesList(false);
+				}
+			},
+
+			__onAutoCloseClick: function() {
+				this.async(this.__onAutoCloseFocus, 1);
 			},
 
 			_onTimeInputFocused: function() {
