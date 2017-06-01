@@ -4,7 +4,6 @@
   "main": "d2l-time-picker.html",
   "dependencies": {
     "polymer": "Polymer/polymer#1.9 - 2",
-    "d2l-forms": "Brightspace/forms#^0.4.35",
     "iron-selector": "PolymerElements/iron-selector#1 - 2",
     "iron-a11y-keys-behavior": "PolymerElements/iron-a11y-keys-behavior#1 - 2",
     "d2l-dropdown": "^5.0.6"
