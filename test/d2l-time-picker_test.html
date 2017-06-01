@@ -349,6 +349,8 @@
 				suite('timezone attribute', function() {
 					setup(function() {
 						this.clock = sinon.useFakeTimers(0);
+						// HACK HACK HACK forces _timezoneChanged to be called after Date is mocked
+						this.element.timezone = '';
 					});
 
 					teardown(function() {
