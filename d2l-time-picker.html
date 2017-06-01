@@ -51,19 +51,16 @@ Accessible, Localized Time Picker Input Element
 
 		<d2l-dropdown no-auto-open>
 			<div class="search-bar d2l-dropdown-opener" id="opener">
-				<iron-input bind-value="{{value}}">
-					<input
-						id="combobox"
-						is="iron-input"
-						type="text"
-						class="d2l-input"
-						role="combobox"
-						aria-autocomplete="list"
-						aria-owns$="{{listboxId}}"
-						aria-activedescendant$={{selectedListboxId}}
-						on-focus="_onTimeInputFocused"
-						value="{{value::input}}">
-				</iron-input>
+				<input
+					id="combobox"
+					type="text"
+					class="d2l-input"
+					role="combobox"
+					aria-autocomplete="list"
+					aria-owns$="{{listboxId}}"
+					aria-activedescendant$={{selectedListboxId}}
+					on-focus="_onTimeInputFocused"
+					value="{{value::input}}">
 			</div>
 
 			<d2l-dropdown-content
@@ -86,9 +83,9 @@ Accessible, Localized Time Picker Input Element
 	</template>
 
 	<script>
+	/* global d2lIntl, moment */
 	(function() {
 		var instances = 0;
-		/* global d2lIntl, moment */
 		Polymer({
 
 			is: 'd2l-time-picker',
@@ -143,6 +140,7 @@ Accessible, Localized Time Picker Input Element
 					readOnly: true,
 					value: []
 				},
+				_dropdownWidth: String,
 				listboxId: String,
 				selectedListboxId: String
 			},
@@ -290,7 +288,7 @@ Accessible, Localized Time Picker Input Element
 				if (this.$.dropdown.opened) {
 					return;
 				}
-				this.set('_dropdownWidth', this.$$('input').offsetWidth);
+				this._dropdownWidth = this.$$('input').offsetWidth;
 				this._openTimesList();
 			},
 
