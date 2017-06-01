@@ -249,7 +249,7 @@
 								this.element.focus();
 							});
 
-							test('selects previous when down is pressed', function(done) {
+							test('selects previous when up is pressed', function(done) {
 								var listbox = this.element.$$('iron-selector');
 								this.element.$.dropdown.addEventListener('d2l-dropdown-open', function() {
 									expect(listbox.selected).to.equal(2);
@@ -273,7 +273,7 @@
 								this.element.focus();
 							});
 
-							test('selects first item when home is pressed', function(done) {
+							test('selects last item when end is pressed', function(done) {
 								var listbox = this.element.$$('iron-selector');
 								this.element.$.dropdown.addEventListener('d2l-dropdown-open', function() {
 									listbox.selectIndex(5);
@@ -298,7 +298,7 @@
 								this.element.value = '';
 							});
 
-							test('updates time when blured', function(done) {
+							test('updates time when blurred', function(done) {
 								var self = this;
 								// Wait for dropdown to register listeners
 								Polymer.RenderStatus.afterNextRender(self.element.$.dropdown, function() {
