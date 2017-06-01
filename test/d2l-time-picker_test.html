@@ -282,7 +282,6 @@
 									var listbox = self.element.$$('iron-selector');
 									self.element.$.dropdown.addEventListener('d2l-dropdown-open', function() {
 										setTimeout(function() {
-											self.element.value = '';
 											listbox.selectIndex(5);
 											self.focusable.focus();
 										});
@@ -295,6 +294,8 @@
 										});
 									});
 
+									self.element.hours = 0;
+									self.element.minutes = 0;
 									self.element.focus();
 								});
 							});
