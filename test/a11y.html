@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+		<title>d2l-time-picker test</title>
+
+		<script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+		<script src="../../web-component-tester/browser.js"></script>
+		<script src="../../web-component-tester/data/a11ySuite.js"></script>
+
+		<link rel="import" href="../../iron-test-helpers/mock-interactions.html">
+		<link rel="import" href="../d2l-time-picker.html">
+	</head>
+	<body>
+		<test-fixture id="a11y">
+			<template>
+				<label>Test<d2l-time-picker></d2l-time-picker></label>
+			</template>
+		</test-fixture>
+
+		<script>
+			/* global MockInteractions */
+			suite('a11y', function() {
+				a11ySuite('a11y');
+				a11ySuite('a11y', [], function() {
+					var a11y = fixture('a11y');
+					var picker = a11y.querySelector('d2l-time-picker');
+					picker.focus();
+				});
+				a11ySuite('a11y', [], function() {
+					var a11y = fixture('a11y');
+					var picker = a11y.querySelector('d2l-time-picker');
+					picker.focus();
+					Polymer.dom.flush();
+					MockInteractions.pressAndReleaseKeyOn(document.activeElement, 27);
+				});
+			});
+		</script>
+	</body>
+</html>
