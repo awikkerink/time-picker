@@ -52,7 +52,6 @@ Accessible, Localized Time Picker Input Element
 		<d2l-dropdown no-auto-open>
 			<div class="search-bar d2l-dropdown-opener" id="opener">
 				<input
-					id="combobox"
 					type="text"
 					class="d2l-input"
 					role="combobox"
@@ -293,20 +292,21 @@ Accessible, Localized Time Picker Input Element
 				});
 			},
 
-			__onAutoCloseFocus: function() {
-				if (Polymer.dom(document).activeElement !== this) {
+			__onAutoCloseFocus: function(e) {
+				if (Polymer.dom(e).localTarget !== this) {
 					return this._closeTimesList(true);
 				}
 			},
 
 			__onAutoCloseClick: function() {
-				this.async(this.__onAutoCloseFocus, 1);
+				this.async(function() {
+					if (Polymer.dom(document).activeElement !== this) {
+						return this._closeTimesList(true);
+					}
+				}, 1);
 			},
 
 			_onTimeInputFocused: function() {
-				if (this.$.dropdown.opened) {
-					return;
-				}
 				this._dropdownWidth = this.$$('input').offsetWidth;
 				this._openTimesList();
 			},
