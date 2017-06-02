@@ -52,6 +52,7 @@ Accessible, Localized Time Picker Input Element
 		<d2l-dropdown no-auto-open>
 			<div class="search-bar d2l-dropdown-opener" id="opener">
 				<input
+					id="{{id}}-combobox"
 					type="text"
 					class="d2l-input"
 					role="combobox"
@@ -224,7 +225,7 @@ Accessible, Localized Time Picker Input Element
 			ready: function() {
 				this.__onAutoCloseFocus = this.__onAutoCloseFocus.bind(this);
 				this.__onAutoCloseClick = this.__onAutoCloseClick.bind(this);
-				this.instanceId = 'd2l-time-picker-' + instances++;
+				this.id = this.id || ('d2l-time-picker-' + instances++);
 			},
 
 			focus: function() {
@@ -259,7 +260,7 @@ Accessible, Localized Time Picker Input Element
 				this.$.dropdown.open();
 				// listboxId is not set until the dropdown is open because the listbox
 				// isn't actually added to the DOM until dropdown is opened for the first time
-				this.listboxId = this.instanceId + '-listbox';
+				this.listboxId = this.id + '-listbox';
 				this.updateSelection(this.hours, this.minutes);
 				this._scrollSelectedItemIntoView();
 				return true;
